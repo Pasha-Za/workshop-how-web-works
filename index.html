@@ -59,6 +59,23 @@
   #tCss  { height: 11em; }
   #tJs   { height: 6em; }
 
+  /* ---------- Міні-квіз (запасний) ---------- */
+  #quiz { margin-top: 24px; background: #fff; border: 3px solid #cfc6ff; border-radius: 16px; padding: 12px 16px; }
+  #quiz summary { font-size: 20px; font-weight: 700; cursor: pointer; }
+  #qBody { padding-top: 12px; }
+  #qCount { font-size: 16px; color: #5b5384; margin: 0 0 6px; }
+  #qText { font-size: 24px; font-weight: 700; margin: 0 0 12px; }
+  #qAnswers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  #qAnswers button, #qAgain {
+    font: inherit; font-size: 20px; font-weight: 700; cursor: pointer; text-align: left;
+    padding: 12px 14px; border-radius: 12px; border: 3px solid #7a5cff; background: #f4f1ff; color: #2b2350;
+  }
+  #qAnswers button:hover:not(:disabled) { background: #e6dfff; }
+  #qAnswers button.ok { background: #2e9e5b; border-color: #2e9e5b; color: #fff; }
+  #qAnswers button.bad { background: #fff; border-color: #b3261e; color: #b3261e; }
+  #qFeed { font-size: 20px; font-weight: 700; min-height: 1.5em; margin: 12px 0 0; }
+  @media (max-width: 640px) { #qAnswers { grid-template-columns: 1fr; } }
+
   @media (max-width: 640px) {
     main { grid-template-columns: 1fr; }
   }
@@ -103,6 +120,18 @@
         <textarea id="tJs" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
       </div>
     </main>
+
+    <!-- Міні-квіз (запасний варіант, якщо немає Kahoot) -->
+    <details id="quiz">
+      <summary>Міні-квіз</summary>
+      <div id="qBody">
+        <p id="qCount"></p>
+        <p id="qText"></p>
+        <div id="qAnswers"></div>
+        <p id="qFeed" role="status"></p>
+        <button id="qAgain" type="button" hidden>Ще раз</button>
+      </div>
+    </details>
   </section>
 
 </div>
@@ -283,6 +312,53 @@
   tCss.addEventListener('input', live);
   $('run').addEventListener('click', run);
   $('reset').addEventListener('click', reset);
+
+
+  // ---------- Міні-квіз (запасний): усе в памʼяті сторінки ----------
+  var QUIZ = [
+    ['Хто в нашій історії офіціант?', ['Браузер', 'Сервер', 'Герой', 'Кнопка']],
+    ['Яка частина сайту - скелет?', ['HTML', 'CSS', 'JS', 'Картинка']],
+    ['Що відповідає за колір і вигляд?', ['CSS', 'HTML', 'JS', 'Мишка']],
+    ['Що змушує героя підморгнути?', ['JS', 'HTML', 'CSS', 'Скелет']],
+    ['Що буде після F5 на сторінці «Зламай сайт»?', ['Усе як було', 'Зміни залишаться', 'Сайт зламається назавжди', 'Інтернет вимкнеться']],
+    ['Що ми зробили, щоб герой полисів?', ['Видалили рядок у HTML', 'Змінили колір у CSS', 'Додали рядок у JS', 'Натиснули F5']],
+    ['Яка кнопка повертає героя таким, як був?', ['Скинути', 'Запустити', 'Delete', 'Enter']],
+    ['У двох героїв однаковий скелет. Що в них різне?', ['Одяг (CSS)', 'Скелет (HTML)', 'Рецепт', 'Інтернет']]
+  ];
+  var qi = 0, qScore = 0, qLocked = false;
+  var qCount = $('qCount'), qText = $('qText'), qAnswers = $('qAnswers'), qFeed = $('qFeed'), qAgain = $('qAgain');
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function showQ() {
+    qLocked = false; qFeed.textContent = ''; qAgain.hidden = true; qAnswers.innerHTML = '';
+    if (qi >= QUIZ.length) {
+      qCount.textContent = '';
+      qText.textContent = 'Готово! Правильних відповідей: ' + qScore + ' з ' + QUIZ.length;
+      qAgain.hidden = false; return;
+    }
+    var q = QUIZ[qi], right = q[1][0];
+    qCount.textContent = 'Питання ' + (qi + 1) + ' з ' + QUIZ.length;
+    qText.textContent = q[0];
+    shuffle(q[1]).forEach(function (ans) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = ans;
+      b.addEventListener('click', function () {
+        if (qLocked) return;
+        if (ans === right) {
+          qLocked = true; qScore++; b.className = 'ok'; qFeed.textContent = 'Правильно!';
+          setTimeout(function () { qi++; showQ(); }, 1000);
+        } else {
+          b.className = 'bad'; b.disabled = true; qFeed.textContent = 'Майже! Спробуй ще раз.';
+        }
+      });
+      qAnswers.appendChild(b);
+    });
+  }
+  qAgain.addEventListener('click', function () { qi = 0; qScore = 0; showQ(); });
+  showQ();
 
   // Вибір героя (один раз)
   var cards = document.querySelectorAll('.choice');
