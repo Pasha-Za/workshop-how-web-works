@@ -64,6 +64,7 @@
   #quiz summary { font-size: 20px; font-weight: 700; cursor: pointer; }
   #qBody { padding-top: 12px; }
   #qCount { font-size: 16px; color: #5b5384; margin: 0 0 6px; }
+  #qImg { display: block; width: 100%; max-width: 480px; height: auto; margin: 0 0 12px; border: 3px solid #cfc6ff; border-radius: 12px; image-rendering: pixelated; }
   #qText { font-size: 24px; font-weight: 700; margin: 0 0 12px; }
   #qAnswers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   #qAnswers button, #qAgain {
@@ -126,6 +127,7 @@
       <summary>Міні-квіз</summary>
       <div id="qBody">
         <p id="qCount"></p>
+        <img id="qImg" alt="" hidden>
         <p id="qText"></p>
         <div id="qAnswers"></div>
         <p id="qFeed" role="status"></p>
@@ -326,7 +328,7 @@
     ['У двох героїв однаковий скелет. Що в них різне?', ['Одяг (CSS)', 'Скелет (HTML)', 'Рецепт', 'Інтернет']]
   ];
   var qi = 0, qScore = 0, qLocked = false;
-  var qCount = $('qCount'), qText = $('qText'), qAnswers = $('qAnswers'), qFeed = $('qFeed'), qAgain = $('qAgain');
+  var qCount = $('qCount'), qText = $('qText'), qImg = $('qImg'), qAnswers = $('qAnswers'), qFeed = $('qFeed'), qAgain = $('qAgain');
   function shuffle(a) {
     a = a.slice();
     for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
@@ -335,13 +337,15 @@
   function showQ() {
     qLocked = false; qFeed.textContent = ''; qAgain.hidden = true; qAnswers.innerHTML = '';
     if (qi >= QUIZ.length) {
-      qCount.textContent = '';
+      qCount.textContent = ''; qImg.hidden = true;
       qText.textContent = 'Готово! Правильних відповідей: ' + qScore + ' з ' + QUIZ.length;
       qAgain.hidden = false; return;
     }
     var q = QUIZ[qi], right = q[1][0];
     qCount.textContent = 'Питання ' + (qi + 1) + ' з ' + QUIZ.length;
     qText.textContent = q[0];
+    qImg.onerror = function () { qImg.hidden = true; };
+    qImg.src = 'quiz-images/q' + (qi + 1) + '.png'; qImg.hidden = false;
     shuffle(q[1]).forEach(function (ans) {
       var b = document.createElement('button');
       b.type = 'button'; b.textContent = ans;
